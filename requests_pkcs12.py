@@ -68,7 +68,7 @@ def request(*args, **kwargs):
     if pkcs12_data is None and pkcs12_filename is None and pkcs12_password is None:
         return request_orig(*args, **kwargs)
     if 'cert' in  kwargs:
-        raise ValueError('Argument "cert" conflicts with arguments "pkcs12_*"')
+        raise ValueError('Argument "cert" conflicts with "pkcs12_*" arguments')
     with Session() as session:
         pkcs12_adapter = Pkcs12Adapter(
             pkcs12_data=pkcs12_data,
