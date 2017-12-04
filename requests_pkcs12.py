@@ -29,12 +29,12 @@ class Pkcs12Adapter(HTTPAdapter):
         pkcs12_data = kwargs.pop('pkcs12_data', None)
         pkcs12_filename = kwargs.pop('pkcs12_filename', None)
         pkcs12_password = kwargs.pop('pkcs12_password', None)
-        if pkcs12_filename is None and pkcs12_data is None:
-            raise ValueError()
-        if pkcs12_filename is not None and pkcs12_data is not None:
-            raise ValueError()
+        if pkcs12_data is None and pkcs12_filename is None:
+            raise ValueError('Both arguments "pkcs12_data" and "pkcs12_filename" are missing')
+        if pkcs12_data is not None and pkcs12_filename is not None:
+            raise ValueError('Argument "pkcs12_data" conflicts with "pkcs12_filename"')
         if pkcs12_password is None:
-            raise ValueError()
+            raise ValueError('Argument "pkcs12_password" is missing')
         if pkcs12_filename is not None:
             with open(pkcs12_filename, 'rb') as pkcs12_file:
                 self._pkcs12_data = pkcs12_file.read()
@@ -68,7 +68,7 @@ def request(*args, **kwargs):
     if pkcs12_data is None and pkcs12_filename is None and pkcs12_password is None:
         return request_orig(*args, **kwargs)
     if 'cert' in  kwargs:
-        raise ValueError()
+        raise ValueError('Argument "cert" conflicts with arguments "pkcs12_*"')
     with Session() as session:
         pkcs12_adapter = Pkcs12Adapter(
             pkcs12_data=pkcs12_data,
