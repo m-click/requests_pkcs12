@@ -1,6 +1,6 @@
 # PKCS#12 support for requests
 
-This library adds PKCS#12 support to the Python [requests]() library.
+This library adds PKCS#12 support to the Python [requests](http://python-requests.org) library.
 
 It is a **clean implementation**: it uses neither monkey patching nor temporary files. Instead, it is integrated into `requests` as recommended by its authors: creating a custom `TransportAdapter`, which provides a custom `SSLContext`.
 
