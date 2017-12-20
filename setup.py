@@ -7,6 +7,10 @@ setup(
     author='Volker Diels-Grabsch',
     author_email='volker.diels-grabsch@m-click.aero',
     license='ISC',
+    install_requires=[
+        'pyOpenSSL (>=0.14)',
+        'requests (>=2.0)',
+    ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
