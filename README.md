@@ -4,24 +4,28 @@ This library adds PKCS#12 support to the Python [requests]() library.
 
 It is a **clean implementation**: it uses neither monkey patching nor temporary files. Instead, it is integrated into `requests` as recommended by its authors: creating a custom `TransportAdapter`, which provides a custom `SSLContext`.
 
-This library is meant to be a transitional solution until this functionality is provided by `requests` directly. However, that will take some time. See the [corresponding `requests` issue](https://github.com/requests/requests/issues/1573) for more details.
+This library is meant to be a transitional solution until this functionality is provided by `requests` directly. However, that will take some time. See the [corresponding issue](https://github.com/requests/requests/issues/1573) for more details.
 
 ## Usage
 
 For simple one-off requests you can use this library as a drop-in replacement for the `requests` library:
 
-    from requests_pkcs12 import request
+```python
+from requests_pkcs12 import request
 
-    r = request('GET', 'https://example.com/test', pkcs12_filename='clientcert.p12', pkcs12_password='correcthorsebatterystaple')
+r = request('get', 'https://example.com/test', pkcs12_filename='clientcert.p12', pkcs12_password='correcthorsebatterystaple')
+```
 
 If you are using `requests` sessions, use the `Pkcs12Adapter`:
 
-    from requests import Session
-    from requests_pkcs12 import Pkcs12Adapter
+```python
+from requests import Session
+from requests_pkcs12 import Pkcs12Adapter
 
-    with Session() as session:
-        session.mount('https://example.com', Pkcs12Adapter(pkcs12_filename='clientcert.p12', pkcs12_password='correcthorsebatterystaple'))
-        r = session.request('GET', 'https://example.com/test')
+with Session() as s:
+    s.mount('https://example.com', Pkcs12Adapter(pkcs12_filename='clientcert.p12', pkcs12_password='correcthorsebatterystaple'))
+    r = s.get('https://example.com/test')
+```
 
 ## Installation
 
@@ -37,8 +41,11 @@ Alternatively, you can retrieve the latest development version via Git:
 
 The following keyword arguments are supported:
 
-* `pkcs12_filename` is a byte string or unicode string that contains the file name of the encrypted PKCS#12 certificate. Either this argument or `pkcs12_data` must be provided.
-* `pkcs12_data` is a byte string that contains the encrypted PKCS#12 certificate data. Either this argument or `pkcs12_filename` must be provided.
-* `pkcs12_password` is a byte string or unicode string that contains the password. This argument must be provided.
+* `pkcs12_filename` is a byte string or unicode string that contains the file name of the encrypted PKCS#12 certificate.
+  * Either this argument or `pkcs12_data` must be provided.
+* `pkcs12_data` is a byte string that contains the encrypted PKCS#12 certificate data.
+  * Either this argument or `pkcs12_filename` must be provided.
+* `pkcs12_password` is a byte string or unicode string that contains the password.
+  * This argument must be provided whenever `pkcs12_filename` or `pkcs12_data` is provided.
 
 If you use these parameters, don't use the built-in `cert` parameter of `requests` at the same time.
