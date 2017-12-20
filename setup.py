@@ -9,7 +9,7 @@ setup(
     license='ISC',
     install_requires=[
         'pyOpenSSL (>=0.14)',
-        'requests (>=2.0)',
+        'requests (>=2.18.4)',
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
