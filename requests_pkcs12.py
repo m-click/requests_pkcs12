@@ -77,3 +77,27 @@ def request(*args, **kwargs):
         )
         session.mount('https://', pkcs12_adapter)
         return session.request(*args, **kwargs)
+
+def delete(*args, **kwargs):
+    return request('delete', *args, **kwargs)
+
+def get(*args, **kwargs):
+    kwargs.setdefault('allow_redirects', True)
+    return request('get', *args, **kwargs)
+
+def head(*args, **kwargs):
+    kwargs.setdefault('allow_redirects', False)
+    return request('head', *args, **kwargs)
+
+def options(*args, **kwargs):
+    kwargs.setdefault('allow_redirects', True)
+    return request('options', *args, **kwargs)
+
+def patch(*args, **kwargs):
+    return request('patch', *args, **kwargs)
+
+def post(*args, **kwargs):
+    return request('post', *args, **kwargs)
+
+def put(*args, **kwargs):
+    return request('put', *args, **kwargs)

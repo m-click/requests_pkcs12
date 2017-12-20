@@ -11,9 +11,9 @@ This library is meant to be a transitional solution until this functionality is 
 For simple one-off requests you can use this library as a drop-in replacement for the `requests` library:
 
 ```python
-from requests_pkcs12 import request
+from requests_pkcs12 import get
 
-r = request('get', 'https://example.com/test', pkcs12_filename='clientcert.p12', pkcs12_password='correcthorsebatterystaple')
+r = get('https://example.com/test', pkcs12_filename='clientcert.p12', pkcs12_password='correcthorsebatterystaple')
 ```
 
 If you are using `requests` sessions, use the `Pkcs12Adapter`:
