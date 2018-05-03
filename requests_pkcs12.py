@@ -21,7 +21,7 @@ from requests import Session
 from requests import request as request_orig
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
-from ssl import PROTOCOL_TLSv1
+from ssl import PROTOCOL_TLSv1_2
 
 class Pkcs12Adapter(HTTPAdapter):
 
@@ -56,7 +56,7 @@ class Pkcs12Adapter(HTTPAdapter):
 
     def _create_ssl_context(self):
         p12 = load_pkcs12(self._pkcs12_data, self._pkcs12_password_bytes)
-        ssl_context = PyOpenSSLContext(PROTOCOL_TLSv1)
+        ssl_context = PyOpenSSLContext(PROTOCOL_TLSv1_2)
         ssl_context._ctx.use_certificate(p12.get_certificate())
         ssl_context._ctx.use_privatekey(p12.get_privatekey())
         return ssl_context
