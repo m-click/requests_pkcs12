@@ -17,11 +17,17 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 '''
 
 from OpenSSL.crypto import load_pkcs12
+from datetime import datetime
 from requests import Session
 from requests import request as request_orig
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
 from ssl import PROTOCOL_TLSv1_2
+
+def check_cert_not_after(cert):
+    cert_not_after = datetime.strptime(cert.get_notAfter(), '%Y%m%d%H%M%SZ')
+    if cert_not_after < datetime.utcnow():
+        raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
 class Pkcs12Adapter(HTTPAdapter):
 
@@ -57,6 +63,7 @@ class Pkcs12Adapter(HTTPAdapter):
     def _create_ssl_context(self):
         p12 = load_pkcs12(self._pkcs12_data, self._pkcs12_password_bytes)
         cert = p12.get_certificate()
+        check_cert_not_after(cert)
         ssl_context = PyOpenSSLContext(PROTOCOL_TLSv1_2)
         ssl_context._ctx.use_certificate(cert)
         ssl_context._ctx.use_privatekey(p12.get_privatekey())
