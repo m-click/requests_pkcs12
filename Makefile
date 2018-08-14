@@ -37,6 +37,6 @@ dist: clean
 
 .PHONY: upload
 upload: dist
-	git tag -s -m $$(python setup.py --version) $$(python setup.py --version)
 	twine upload dist/requests_pkcs12-$$(python setup.py --version)*
+	git tag -s -m $$(python setup.py --version) $$(python setup.py --version)
 	git push --tags
