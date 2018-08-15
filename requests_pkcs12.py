@@ -25,7 +25,7 @@ from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
 from ssl import PROTOCOL_TLSv1_2
 
 def check_cert_not_after(cert):
-    cert_not_after = datetime.strptime(cert.get_notAfter().decode('utf-8'), '%Y%m%d%H%M%SZ')
+    cert_not_after = datetime.strptime(cert.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ')
     if cert_not_after < datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
