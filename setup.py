@@ -1,7 +1,7 @@
 from setuptools import setup
 setup(
     name='requests_pkcs12',
-    version='1.0.7',
+    version='1.0.8',
     description='Add PKCS#12 support to the requests library in a clean way, without monkey patching or temporary files',
     long_description='''
     PKCS#12 support for requests
