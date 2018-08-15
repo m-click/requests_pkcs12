@@ -3,16 +3,8 @@ setup(
     name='requests_pkcs12',
     version='1.0.8',
     description='Add PKCS#12 support to the requests library in a clean way, without monkey patching or temporary files',
-    long_description='''
-    PKCS#12 support for requests
-    ============================
-
-    This library adds PKCS#12 support to the Python `requests <http://python-requests.org>`_ library.
-
-    It is a **clean implementation**: it uses neither monkey patching nor temporary files. Instead, it is integrated into ``requests`` as recommended by its authors: creating a custom ``TransportAdapter``, which provides a custom ``SSLContext``.
-
-    This library is meant to be a transitional solution until this functionality is provided by ``requests`` directly. However, that will take some time. See the `corresponding issue <https://github.com/requests/requests/issues/1573>`_ for more details.
-    '''.replace('\n    ', '\n'),
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     url='https://github.com/m-click/requests_pkcs12',
     author='Volker Diels-Grabsch',
     author_email='volker.diels-grabsch@m-click.aero',
