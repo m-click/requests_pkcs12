@@ -32,6 +32,8 @@ def check_cert_not_after(cert):
 class Pkcs12Adapter(HTTPAdapter):
 
     def __init__(self, *args, **kwargs):
+        _pkcs12_data = None
+        _pkcs12_password_bytes = None
         pkcs12_data = kwargs.pop('pkcs12_data', None)
         pkcs12_filename = kwargs.pop('pkcs12_filename', None)
         pkcs12_password = kwargs.pop('pkcs12_password', None)
@@ -43,25 +45,31 @@ class Pkcs12Adapter(HTTPAdapter):
             raise ValueError('Argument "pkcs12_password" is missing')
         if pkcs12_filename is not None:
             with open(pkcs12_filename, 'rb') as pkcs12_file:
-                self._pkcs12_data = pkcs12_file.read()
+                _pkcs12_data = pkcs12_file.read()
         else:
-            self._pkcs12_data = pkcs12_data
+            _pkcs12_data = pkcs12_data
         if isinstance(pkcs12_password, bytes):
-            self._pkcs12_password_bytes = pkcs12_password
+            _pkcs12_password_bytes = pkcs12_password
         else:
-            self._pkcs12_password_bytes = pkcs12_password.encode('utf8')
+            _pkcs12_password_bytes = pkcs12_password.encode('utf8')
+
+        if _pkcs12_data and _pkcs12_password_bytes:
+            self.ssl_context = _create_ssl_context(_pkcs12_data, _pkcs12_password_bytes)
+
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
 
     def init_poolmanager(self, *args, **kwargs):
-        kwargs['ssl_context'] = self._create_ssl_context()
+        if self.ssl_context:
+            kwargs['ssl_context'] = self.ssl_context
         return super(Pkcs12Adapter, self).init_poolmanager(*args, **kwargs)
 
     def proxy_manager_for(self, *args, **kwargs):
-        kwargs['ssl_context'] = self._create_ssl_context()
+        if self.ssl_context:
+            kwargs['ssl_context'] = self.ssl_context
         return super(Pkcs12Adapter, self).proxy_manager_for(*args, **kwargs)
 
-    def _create_ssl_context(self):
-        p12 = load_pkcs12(self._pkcs12_data, self._pkcs12_password_bytes)
+    def _create_ssl_context(pkcs12_data, pkcs12_password_bytes):
+        p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
         cert = p12.get_certificate()
         check_cert_not_after(cert)
         ssl_context = PyOpenSSLContext(PROTOCOL_TLSv1_2)
