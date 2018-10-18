@@ -55,6 +55,8 @@ class Pkcs12Adapter(HTTPAdapter):
 
         if _pkcs12_data and _pkcs12_password_bytes:
             self.ssl_context = _create_ssl_context(_pkcs12_data, _pkcs12_password_bytes)
+        else:
+            raise ValueError('Insufficient data to create SSL Context')
 
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
 
