@@ -29,6 +29,15 @@ def check_cert_not_after(cert):
     if cert_not_after < datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
+def create_ssl_context(pkcs12_data, pkcs12_password_bytes):
+    p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
+    cert = p12.get_certificate()
+    check_cert_not_after(cert)
+    ssl_context = PyOpenSSLContext(PROTOCOL_TLSv1_2)
+    ssl_context._ctx.use_certificate(cert)
+    ssl_context._ctx.use_privatekey(p12.get_privatekey())
+    return ssl_context
+
 class Pkcs12Adapter(HTTPAdapter):
 
     def __init__(self, *args, **kwargs):
@@ -54,7 +63,7 @@ class Pkcs12Adapter(HTTPAdapter):
             _pkcs12_password_bytes = pkcs12_password.encode('utf8')
 
         if _pkcs12_data and _pkcs12_password_bytes:
-            self.ssl_context = _create_ssl_context(_pkcs12_data, _pkcs12_password_bytes)
+            self.ssl_context = create_ssl_context(_pkcs12_data, _pkcs12_password_bytes)
         else:
             raise ValueError('Insufficient data to create SSL Context')
 
@@ -69,15 +78,6 @@ class Pkcs12Adapter(HTTPAdapter):
         if self.ssl_context:
             kwargs['ssl_context'] = self.ssl_context
         return super(Pkcs12Adapter, self).proxy_manager_for(*args, **kwargs)
-
-    def _create_ssl_context(pkcs12_data, pkcs12_password_bytes):
-        p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
-        cert = p12.get_certificate()
-        check_cert_not_after(cert)
-        ssl_context = PyOpenSSLContext(PROTOCOL_TLSv1_2)
-        ssl_context._ctx.use_certificate(cert)
-        ssl_context._ctx.use_privatekey(p12.get_privatekey())
-        return ssl_context
 
 def request(*args, **kwargs):
     pkcs12_data = kwargs.pop('pkcs12_data', None)
