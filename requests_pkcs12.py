@@ -22,7 +22,10 @@ from requests import Session
 from requests import request as request_orig
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
-from ssl import PROTOCOL_SSLv23 as ssl_protocol
+try:
+    from ssl import PROTOCOL_TLS as ssl_protocol
+except ImportError:
+    from ssl import PROTOCOL_SSLv23 as ssl_protocol
 
 def check_cert_not_after(cert):
     cert_not_after = datetime.strptime(cert.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ')
