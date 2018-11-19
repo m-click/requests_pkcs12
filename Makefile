@@ -30,13 +30,13 @@ clean:
 
 .PHONY: dist
 dist: clean
-	python setup.py sdist
-	python setup.py bdist_wheel --universal
-	gpg --detach-sign -a dist/requests_pkcs12-$$(python setup.py --version).tar.gz
-	gpg --detach-sign -a dist/requests_pkcs12-$$(python setup.py --version)-py2.py3-none-any.whl
+	python3 setup.py sdist
+	python3 setup.py bdist_wheel --universal
+	gpg --detach-sign -a dist/requests_pkcs12-$$(python3 setup.py --version).tar.gz
+	gpg --detach-sign -a dist/requests_pkcs12-$$(python3 setup.py --version)-py2.py3-none-any.whl
 
 .PHONY: upload
 upload: dist
-	twine upload dist/requests_pkcs12-$$(python setup.py --version)*
-	git tag -s -m $$(python setup.py --version) $$(python setup.py --version)
+	twine upload dist/requests_pkcs12-$$(python3 setup.py --version)*
+	git tag -s -m $$(python3 setup.py --version) $$(python3 setup.py --version)
 	git push --tags
