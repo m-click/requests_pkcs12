@@ -22,7 +22,7 @@ from requests import Session
 from requests import request as request_orig
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
-from ssl import PROTOCOL_TLSv1_2
+from ssl import PROTOCOL_SSLv23 as ssl_protocol
 
 def check_cert_not_after(cert):
     cert_not_after = datetime.strptime(cert.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ')
@@ -33,7 +33,7 @@ def create_ssl_context(pkcs12_data, pkcs12_password_bytes):
     p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
     cert = p12.get_certificate()
     check_cert_not_after(cert)
-    ssl_context = PyOpenSSLContext(PROTOCOL_TLSv1_2)
+    ssl_context = PyOpenSSLContext(ssl_protocol)
     ssl_context._ctx.use_certificate(cert)
     ssl_context._ctx.use_privatekey(p12.get_privatekey())
     return ssl_context
