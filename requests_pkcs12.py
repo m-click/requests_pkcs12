@@ -44,7 +44,6 @@ def create_ssl_context(pkcs12_data, pkcs12_password_bytes):
 class Pkcs12Adapter(HTTPAdapter):
 
     def __init__(self, *args, **kwargs):
-        _pkcs12_data = None
         _pkcs12_password_bytes = None
         pkcs12_data = kwargs.pop('pkcs12_data', None)
         pkcs12_filename = kwargs.pop('pkcs12_filename', None)
@@ -57,16 +56,14 @@ class Pkcs12Adapter(HTTPAdapter):
             raise ValueError('Argument "pkcs12_password" is missing')
         if pkcs12_filename is not None:
             with open(pkcs12_filename, 'rb') as pkcs12_file:
-                _pkcs12_data = pkcs12_file.read()
-        else:
-            _pkcs12_data = pkcs12_data
+                pkcs12_data = pkcs12_file.read()
         if isinstance(pkcs12_password, bytes):
             _pkcs12_password_bytes = pkcs12_password
         else:
             _pkcs12_password_bytes = pkcs12_password.encode('utf8')
 
-        if _pkcs12_data and _pkcs12_password_bytes:
-            self.ssl_context = create_ssl_context(_pkcs12_data, _pkcs12_password_bytes)
+        if pkcs12_data and _pkcs12_password_bytes:
+            self.ssl_context = create_ssl_context(pkcs12_data, _pkcs12_password_bytes)
         else:
             raise ValueError('Insufficient data to create SSL Context')
 
