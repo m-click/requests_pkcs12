@@ -38,6 +38,11 @@ def create_ssl_context(pkcs12_data, pkcs12_password_bytes):
     check_cert_not_after(cert)
     ssl_context = PyOpenSSLContext(ssl_protocol)
     ssl_context._ctx.use_certificate(cert)
+    ca_certs = p12.get_ca_certificates()
+    if ca_certs:
+        for ca_cert in ca_certs:
+            check_cert_not_after(ca_cert)
+            ssl_context._ctx.add_extra_chain_cert(ca_cert)
     ssl_context._ctx.use_privatekey(p12.get_privatekey())
     return ssl_context
 
