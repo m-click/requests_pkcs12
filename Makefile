@@ -39,4 +39,5 @@ dist: clean
 upload: dist
 	twine upload dist/requests_pkcs12-$$(python3 setup.py --version)*
 	git tag -s -m $$(python3 setup.py --version) $$(python3 setup.py --version)
+	git push
 	git push --tags
