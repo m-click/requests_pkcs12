@@ -37,7 +37,7 @@ This library is available as `PyPI package <https://pypi.python.org/pypi/request
 
 ::
 
-   pip install requests_pkcs12
+   pip install requests-pkcs12
 
 Alternatively, you can retrieve the latest development version via Git:
 
