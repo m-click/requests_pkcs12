@@ -1,7 +1,7 @@
 from setuptools import setup
 setup(
     name='requests_pkcs12',
-    version='1.6',
+    version='1.7',
     description='Add PKCS#12 support to the requests library in a clean way, without monkey patching or temporary files',
     long_description=open('README.rst', 'rb').read().decode('UTF-8'),
     url='https://github.com/m-click/requests_pkcs12',
