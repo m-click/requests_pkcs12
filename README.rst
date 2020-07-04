@@ -19,7 +19,7 @@ For simple one-off requests you can use this library as a drop-in replacement fo
 
    r = get('https://example.com/test', pkcs12_filename='clientcert.p12', pkcs12_password='correcthorsebatterystaple')
 
-If you are using ``requests`` sessions, use the ``Pkcs12Adapter``:
+If you are using `requests sessions <https://requests.readthedocs.io/en/master/user/advanced/>`__, use the ``Pkcs12Adapter``:
 
 .. code:: python
 
