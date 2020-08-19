@@ -21,7 +21,7 @@ from datetime import datetime
 from requests import Session
 from requests import request as request_orig
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
+from urllib3.contrib.pyopenssl import PyOpenSSLContext
 try:
     from ssl import PROTOCOL_TLS as ssl_protocol
 except ImportError:
