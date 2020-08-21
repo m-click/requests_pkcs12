@@ -16,12 +16,15 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 '''
 
-from OpenSSL.crypto import load_pkcs12
+import os
+from OpenSSL.crypto import load_pkcs12, dump_certificate, dump_privatekey,FILETYPE_PEM
 from datetime import datetime
 from requests import Session
 from requests import request as request_orig
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
+from ssl import SSLContext
+from tempfile import NamedTemporaryFile
 try:
     from ssl import PROTOCOL_TLS as ssl_protocol
 except ImportError:
@@ -32,7 +35,7 @@ def check_cert_not_after(cert):
     if cert_not_after < datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
-def create_ssl_context(pkcs12_data, pkcs12_password_bytes):
+def create_pyopenssl_ssl_context(pkcs12_data, pkcs12_password_bytes):
     p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
     cert = p12.get_certificate()
     check_cert_not_after(cert)
@@ -44,6 +47,33 @@ def create_ssl_context(pkcs12_data, pkcs12_password_bytes):
             check_cert_not_after(ca_cert)
             ssl_context._ctx.add_extra_chain_cert(ca_cert)
     ssl_context._ctx.use_privatekey(p12.get_privatekey())
+    return ssl_context
+
+def create_ssl_ssl_context(pkcs12_data, pkcs12_password_bytes):
+    cipher = 'blowfish'
+    p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
+    cert = p12.get_certificate()
+    check_cert_not_after(cert)
+    ssl_context = SSLContext(ssl_protocol)
+    with NamedTemporaryFile(delete=False) as c:
+        try:
+            pk_buf = dump_privatekey(FILETYPE_PEM, p12.get_privatekey(), cipher, pkcs12_password_bytes)
+            c.write(pk_buf)
+            buf = dump_certificate(FILETYPE_PEM, p12.get_certificate())
+            c.write(buf)
+            ca_certs = p12.get_ca_certificates()
+            if ca_certs:
+                for ca_cert in ca_certs:
+                    check_cert_not_after(ca_cert)
+                    buf = dump_certificate(FILETYPE_PEM, ca_cert)
+                    c.write(buf)
+
+            c.flush()
+            c.close()
+            ssl_context.load_cert_chain(c.name, password=pkcs12_password_bytes)
+        finally:
+            os.remove(c.name)
+    
     return ssl_context
 
 class Pkcs12Adapter(HTTPAdapter):
@@ -65,7 +95,7 @@ class Pkcs12Adapter(HTTPAdapter):
             pkcs12_password_bytes = pkcs12_password
         else:
             pkcs12_password_bytes = pkcs12_password.encode('utf8')
-        self.ssl_context = create_ssl_context(pkcs12_data, pkcs12_password_bytes)
+        self.ssl_context = create_pyopenssl_ssl_context(pkcs12_data, pkcs12_password_bytes)
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
 
     def init_poolmanager(self, *args, **kwargs):
