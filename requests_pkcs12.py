@@ -36,7 +36,7 @@ def check_cert_not_after(cert):
     if cert_not_after < datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
-def create_pyopenssl_ssl_context(pkcs12_data, pkcs12_password_bytes):
+def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes):
     p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
     cert = p12.get_certificate()
     check_cert_not_after(cert)
@@ -50,7 +50,7 @@ def create_pyopenssl_ssl_context(pkcs12_data, pkcs12_password_bytes):
     ssl_context._ctx.use_privatekey(p12.get_privatekey())
     return ssl_context
 
-def create_ssl_ssl_context(pkcs12_data, pkcs12_password_bytes):
+def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes):
     cipher = 'blowfish'
     p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
     cert = p12.get_certificate()
