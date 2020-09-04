@@ -96,7 +96,7 @@ class Pkcs12Adapter(HTTPAdapter):
             pkcs12_password_bytes = pkcs12_password
         else:
             pkcs12_password_bytes = pkcs12_password.encode('utf8')
-        self.ssl_context = create_pyopenssl_ssl_context(pkcs12_data, pkcs12_password_bytes)
+        self.ssl_context = create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes)
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
 
     def init_poolmanager(self, *args, **kwargs):
