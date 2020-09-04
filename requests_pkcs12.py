@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 '''
 
 import os
-from OpenSSL.crypto import load_pkcs12, dump_certificate, dump_privatekey,FILETYPE_PEM
+from OpenSSL.crypto import load_pkcs12, dump_certificate, dump_privatekey, FILETYPE_PEM
 from datetime import datetime
 from requests import Session
 from requests import request as request_orig
