@@ -36,11 +36,11 @@ def check_cert_not_after(cert):
     if cert_not_after < datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
-def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes):
+def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
     p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
     cert = p12.get_certificate()
     check_cert_not_after(cert)
-    ssl_context = PyOpenSSLContext(default_ssl_protocol)
+    ssl_context = PyOpenSSLContext(ssl_protocol)
     ssl_context._ctx.use_certificate(cert)
     ca_certs = p12.get_ca_certificates()
     if ca_certs:
@@ -50,12 +50,12 @@ def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes):
     ssl_context._ctx.use_privatekey(p12.get_privatekey())
     return ssl_context
 
-def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes):
+def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
     cipher = 'blowfish'
     p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
     cert = p12.get_certificate()
     check_cert_not_after(cert)
-    ssl_context = SSLContext(default_ssl_protocol)
+    ssl_context = SSLContext(ssl_protocol)
     with NamedTemporaryFile(delete=False) as c:
         try:
             pk_buf = dump_privatekey(FILETYPE_PEM, p12.get_privatekey(), cipher, pkcs12_password_bytes)
@@ -81,6 +81,7 @@ class Pkcs12Adapter(HTTPAdapter):
         pkcs12_data = kwargs.pop('pkcs12_data', None)
         pkcs12_filename = kwargs.pop('pkcs12_filename', None)
         pkcs12_password = kwargs.pop('pkcs12_password', None)
+        ssl_protocol = kwargs.pop('ssl_protocol', default_ssl_protocol)
         if pkcs12_data is None and pkcs12_filename is None:
             raise ValueError('Both arguments "pkcs12_data" and "pkcs12_filename" are missing')
         if pkcs12_data is not None and pkcs12_filename is not None:
@@ -94,7 +95,7 @@ class Pkcs12Adapter(HTTPAdapter):
             pkcs12_password_bytes = pkcs12_password
         else:
             pkcs12_password_bytes = pkcs12_password.encode('utf8')
-        self.ssl_context = create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes)
+        self.ssl_context = create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
 
     def init_poolmanager(self, *args, **kwargs):
@@ -111,6 +112,7 @@ def request(*args, **kwargs):
     pkcs12_data = kwargs.pop('pkcs12_data', None)
     pkcs12_filename = kwargs.pop('pkcs12_filename', None)
     pkcs12_password = kwargs.pop('pkcs12_password', None)
+    ssl_protocol = kwargs.pop('ssl_protocol', default_ssl_protocol)
     if pkcs12_data is None and pkcs12_filename is None and pkcs12_password is None:
         return request_orig(*args, **kwargs)
     if 'cert' in  kwargs:
@@ -120,6 +122,7 @@ def request(*args, **kwargs):
             pkcs12_data=pkcs12_data,
             pkcs12_filename=pkcs12_filename,
             pkcs12_password=pkcs12_password,
+            ssl_protocol=ssl_protocol,
         )
         session.mount('https://', pkcs12_adapter)
         return session.request(*args, **kwargs)
