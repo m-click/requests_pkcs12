@@ -62,4 +62,8 @@ The following keyword arguments are supported:
 
    -  This argument must be provided whenever ``pkcs12_filename`` or ``pkcs12_data`` is provided.
 
+-  ``ssl_protocol`` is a protocol version from the ``ssl`` library.
+
+   -  This argument can be provided whenever, the default value is ``ssl.PROTOCOL_TLS``.
+
 If you use these parameters, don’t use the built-in ``cert`` parameter of ``requests`` at the same time. However, do use the other parameters.  In particular, do use `the "verify" parameter <http://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification>`__ to verify the server-side certificate.
