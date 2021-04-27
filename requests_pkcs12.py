@@ -68,13 +68,11 @@ def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes):
                     check_cert_not_after(ca_cert)
                     buf = dump_certificate(FILETYPE_PEM, ca_cert)
                     c.write(buf)
-
             c.flush()
             c.close()
             ssl_context.load_cert_chain(c.name, password=pkcs12_password_bytes)
         finally:
             os.remove(c.name)
-    
     return ssl_context
 
 class Pkcs12Adapter(HTTPAdapter):
