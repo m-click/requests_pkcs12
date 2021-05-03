@@ -27,9 +27,9 @@ from ssl import SSLContext
 from tempfile import NamedTemporaryFile
 
 try:
-    from ssl import PROTOCOL_TLS as ssl_protocol
+    from ssl import PROTOCOL_TLS as default_ssl_protocol
 except ImportError:
-    from ssl import PROTOCOL_SSLv23 as ssl_protocol
+    from ssl import PROTOCOL_SSLv23 as default_ssl_protocol
 
 def check_cert_not_after(cert):
     cert_not_after = datetime.strptime(cert.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ')
@@ -40,7 +40,7 @@ def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes):
     p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
     cert = p12.get_certificate()
     check_cert_not_after(cert)
-    ssl_context = PyOpenSSLContext(ssl_protocol)
+    ssl_context = PyOpenSSLContext(default_ssl_protocol)
     ssl_context._ctx.use_certificate(cert)
     ca_certs = p12.get_ca_certificates()
     if ca_certs:
@@ -55,7 +55,7 @@ def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes):
     p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
     cert = p12.get_certificate()
     check_cert_not_after(cert)
-    ssl_context = SSLContext(ssl_protocol)
+    ssl_context = SSLContext(default_ssl_protocol)
     with NamedTemporaryFile(delete=False) as c:
         try:
             pk_buf = dump_privatekey(FILETYPE_PEM, p12.get_privatekey(), cipher, pkcs12_password_bytes)
