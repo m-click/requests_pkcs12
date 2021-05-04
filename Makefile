@@ -49,7 +49,7 @@ release:
 	  import subprocess; \
 	  old_version = subprocess.check_output(["python3", "setup.py", "--version"], encoding="ascii").strip(); \
 	  new_version = "1.{}.dev0".format(int(old_version.split(".")[1]) + 1); \
-	  new_setup_py = open("setup.py").read().replace(old_version, new_version); \
+	  new_setup_py = open("setup.py").read().replace("version='\''{}".format(old_version), "version='\''{}".format(new_version)); \
 	  open("setup.py", "w").write(new_setup_py)'
 	git commit -am "Set version to $$(python3 setup.py --version)"
 	git push
