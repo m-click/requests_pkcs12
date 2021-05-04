@@ -52,4 +52,5 @@ release:
 	  new_setup_py = open("setup.py").read().replace(old_version, new_version); \
 	  open("setup.py", "w").write(new_setup_py)'
 	git commit -am "Set version to $$(python3 setup.py --version)"
+	git push
 	git push --tags
