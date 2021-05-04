@@ -64,6 +64,6 @@ The following keyword arguments are supported:
 
 -  ``ssl_protocol`` is a protocol version from the ``ssl`` library.
 
-   -  This argument can be provided whenever, the default value is ``ssl.PROTOCOL_TLS``.
+   -  This argument is optional and defaults to ``ssl.PROTOCOL_TLS``.
 
 If you use these parameters, don’t use the built-in ``cert`` parameter of ``requests`` at the same time. However, do use the other parameters.  In particular, do use `the "verify" parameter <http://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification>`__ to verify the server-side certificate.
