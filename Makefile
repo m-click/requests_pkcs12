@@ -21,7 +21,7 @@ usage:
 	@echo ''
 	@echo '    make clean'
 	@echo '    make dist'
-	@echo '    make upload'
+	@echo '    make release'
 	@echo ''
 
 .PHONY: clean
@@ -35,9 +35,22 @@ dist: clean
 	gpg --detach-sign -a dist/requests_pkcs12-$$(python3 setup.py --version).tar.gz
 	gpg --detach-sign -a dist/requests_pkcs12-$$(python3 setup.py --version)-py2.py3-none-any.whl
 
-.PHONY: upload
-upload: dist
+.PHONY: release
+release:
+	[ "$$(git diff | wc -c)" = 0 ]
+	python3 -c '\
+	  new_setup_py = open("setup.py").read().replace(".dev0", ""); \
+	  open("setup.py", "w").write(new_setup_py)'
+	$(MAKE) dist
 	twine upload dist/requests_pkcs12-$$(python3 setup.py --version)*
-	git tag -s -m $$(python3 setup.py --version) $$(python3 setup.py --version)
-	git push
+	git commit -am "Release $$(python3 setup.py --version)"
+	git tag -sm "$$(python3 setup.py --version)" "$$(python3 setup.py --version)"
+	python3 -c '\
+	  import subprocess; \
+	  old_version = subprocess.check_output(["python3", "setup.py", "--version"], encoding="ascii").strip(); \
+	  new_version = "1.{}.dev0".format(int(old_version.split(".")[1]) + 1); \
+	  new_setup_py = open("setup.py").read().replace(old_version, new_version); \
+	  open("setup.py", "w").write(new_setup_py)'
+	$(MAKE) -j 4
+	git commit -am "Set version to $$(python3 setup.py --version)"
 	git push --tags
