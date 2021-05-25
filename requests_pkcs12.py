@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 '''
 
 import os
-from OpenSSL.crypto import load_pkcs12, dump_certificate, dump_privatekey, FILETYPE_PEM
+from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 from datetime import datetime
 from requests import Session
 from requests import request as request_orig
@@ -32,35 +32,31 @@ except ImportError:
     from ssl import PROTOCOL_SSLv23 as default_ssl_protocol
 
 def check_cert_not_after(cert):
-    cert_not_after = datetime.strptime(cert.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ')
-    if cert_not_after < datetime.utcnow():
+    if cert.not_valid_after() < datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
 def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
-    p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
-    cert = p12.get_certificate()
+    (private_key, cert, ca_certs)= load_key_and_certificates(pkcs12_data, pkcs12_password_bytes)
     check_cert_not_after(cert)
     ssl_context = PyOpenSSLContext(ssl_protocol)
     ssl_context._ctx.use_certificate(cert)
-    ca_certs = p12.get_ca_certificates()
     if ca_certs:
         for ca_cert in ca_certs:
             check_cert_not_after(ca_cert)
             ssl_context._ctx.add_extra_chain_cert(ca_cert)
-    ssl_context._ctx.use_privatekey(p12.get_privatekey())
+    ssl_context._ctx.use_privatekey(private_key)
     return ssl_context
 
 def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
     cipher = 'blowfish'
-    p12 = load_pkcs12(pkcs12_data, pkcs12_password_bytes)
-    cert = p12.get_certificate()
+    (private_key, cert, ca_certs)= load_key_and_certificates(pkcs12_data, pkcs12_password_bytes)
     check_cert_not_after(cert)
     ssl_context = SSLContext(ssl_protocol)
     with NamedTemporaryFile(delete=False) as c:
         try:
-            pk_buf = dump_privatekey(FILETYPE_PEM, p12.get_privatekey(), cipher, pkcs12_password_bytes)
+            pk_buf = dump_privatekey(FILETYPE_PEM, private_key, cipher, pkcs12_password_bytes)
             c.write(pk_buf)
-            buf = dump_certificate(FILETYPE_PEM, p12.get_certificate())
+            buf = dump_certificate(FILETYPE_PEM, cert)
             c.write(buf)
             ca_certs = p12.get_ca_certificates()
             if ca_certs:
