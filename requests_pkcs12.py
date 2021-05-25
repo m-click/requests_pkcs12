@@ -1,4 +1,7 @@
 from __future__ import division, print_function, unicode_literals
+from cryptography.hazmat.primitives import serialization
+
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 
 __copyright__ = '''\
 Copyright (C) m-click.aero GmbH
@@ -32,7 +35,8 @@ except ImportError:
     from ssl import PROTOCOL_SSLv23 as default_ssl_protocol
 
 def check_cert_not_after(cert):
-    if cert.not_valid_after() < datetime.utcnow():
+    cert_not_after = cert.not_valid_after()
+    if cert_not_after < datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
 def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
@@ -48,21 +52,19 @@ def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol
     return ssl_context
 
 def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
-    cipher = 'blowfish'
     (private_key, cert, ca_certs)= load_key_and_certificates(pkcs12_data, pkcs12_password_bytes)
     check_cert_not_after(cert)
     ssl_context = SSLContext(ssl_protocol)
     with NamedTemporaryFile(delete=False) as c:
         try:
-            pk_buf = dump_privatekey(FILETYPE_PEM, private_key, cipher, pkcs12_password_bytes)
+            pk_buf = private_key.private_bytes(Encoding.PEM, PrivateFormat.TraditionalOpenSSL, serialization.KeySerializationEncryption)
             c.write(pk_buf)
-            buf = dump_certificate(FILETYPE_PEM, cert)
+            buf = cert.public_bytes(Encoding.PEM)
             c.write(buf)
-            ca_certs = p12.get_ca_certificates()
             if ca_certs:
                 for ca_cert in ca_certs:
                     check_cert_not_after(ca_cert)
-                    buf = dump_certificate(FILETYPE_PEM, ca_cert)
+                    buf = ca_cert.public_bytes(Encoding.PEM)
                     c.write(buf)
             c.flush()
             c.close()
