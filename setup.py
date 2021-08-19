@@ -9,6 +9,7 @@ setup(
     author_email='volker.diels-grabsch@m-click.aero',
     license='ISC',
     install_requires=[
+        'cryptography (>=3.4.7)',
         'pyOpenSSL (>=0.14)',
         'requests (>=2.18.4)',
     ],
