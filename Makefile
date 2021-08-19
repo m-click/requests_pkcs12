@@ -26,27 +26,36 @@ usage:
 
 .PHONY: clean
 clean:
-	rm -rf *.egg-info/ build/ dist/
+	rm -rf .venv *.egg-info/ build/ dist/
+
+.venv/finished:
+	rm -rf .venv
+	python3 -m venv .venv
+	. .venv/bin/activate && python3 -m pip install --upgrade pip
+	. .venv/bin/activate && python3 -m pip install twine wheel
+	touch $@
 
 .PHONY: dist
-dist: clean
-	python3 setup.py sdist
-	python3 setup.py bdist_wheel
+dist: .venv/finished
+	rm -rf *.egg-info/ build/ dist/
+	. .venv/bin/activate && python3 setup.py sdist
+	. .venv/bin/activate && python3 setup.py bdist_wheel
 	gpg --detach-sign -a dist/requests_pkcs12-*.tar.gz
 	gpg --detach-sign -a dist/requests_pkcs12-*-py3-none-any.whl
 
 .PHONY: release
-release:
+release: clean
 	[ "$$(git diff | wc -c)" = 0 ]
-	python3 -c '\
+	$(MAKE) .venv/finished
+	. .venv/bin/activate && python3 -c '\
 	  old_version = open("version").read().strip(); \
 	  new_version = old_version.replace(".dev0", ""); \
 	  open("version", "w").write("{}\n".format(new_version))'
 	$(MAKE) dist
-	twine upload dist/requests_pkcs12-*
+	. .venv/bin/activate && python3 -m twine upload dist/requests_pkcs12-*
 	git commit -am "Release $$(cat version)"
 	git tag -sm "$$(cat version)" "$$(cat version)"
-	python3 -c '\
+	. .venv/bin/activate && python3 -c '\
 	  old_version = open("version").read().strip(); \
 	  new_version = "1.{}.dev0".format(int(old_version.split(".")[1]) + 1); \
 	  open("version", "w").write("{}\n".format(new_version))'
