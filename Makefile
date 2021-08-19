@@ -31,9 +31,9 @@ clean:
 .PHONY: dist
 dist: clean
 	python3 setup.py sdist
-	python3 setup.py bdist_wheel --universal
+	python3 setup.py bdist_wheel
 	gpg --detach-sign -a dist/requests_pkcs12-$$(python3 setup.py --version).tar.gz
-	gpg --detach-sign -a dist/requests_pkcs12-$$(python3 setup.py --version)-py2.py3-none-any.whl
+	gpg --detach-sign -a dist/requests_pkcs12-$$(python3 setup.py --version)-py3-none-any.whl
 
 .PHONY: release
 release:

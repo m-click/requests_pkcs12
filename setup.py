@@ -3,7 +3,7 @@ setup(
     name='requests_pkcs12',
     version='1.11.dev0',
     description='Add PKCS#12 support to the requests library in a clean way, without monkey patching or temporary files',
-    long_description=open('README.rst', 'rb').read().decode('UTF-8'),
+    long_description=open('README.rst', 'r').read(),
     url='https://github.com/m-click/requests_pkcs12',
     author='Volker Diels-Grabsch',
     author_email='volker.diels-grabsch@m-click.aero',
