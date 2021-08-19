@@ -32,8 +32,8 @@ clean:
 dist: clean
 	python3 setup.py sdist
 	python3 setup.py bdist_wheel
-	gpg --detach-sign -a dist/requests_pkcs12-$$(cat version).tar.gz
-	gpg --detach-sign -a dist/requests_pkcs12-$$(cat version)-py3-none-any.whl
+	gpg --detach-sign -a dist/requests_pkcs12-*.tar.gz
+	gpg --detach-sign -a dist/requests_pkcs12-*-py3-none-any.whl
 
 .PHONY: release
 release:
@@ -43,7 +43,7 @@ release:
 	  new_version = old_version.replace(".dev0", ""); \
 	  open("version", "w").write("{}\n".format(new_version))'
 	$(MAKE) dist
-	twine upload dist/requests_pkcs12-$$(cat version)*
+	twine upload dist/requests_pkcs12-*
 	git commit -am "Release $$(cat version)"
 	git tag -sm "$$(cat version)" "$$(cat version)"
 	python3 -c '\
