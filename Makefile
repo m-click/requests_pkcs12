@@ -32,25 +32,24 @@ clean:
 dist: clean
 	python3 setup.py sdist
 	python3 setup.py bdist_wheel
-	gpg --detach-sign -a dist/requests_pkcs12-$$(python3 setup.py --version).tar.gz
-	gpg --detach-sign -a dist/requests_pkcs12-$$(python3 setup.py --version)-py3-none-any.whl
+	gpg --detach-sign -a dist/requests_pkcs12-$$(cat version).tar.gz
+	gpg --detach-sign -a dist/requests_pkcs12-$$(cat version)-py3-none-any.whl
 
 .PHONY: release
 release:
 	[ "$$(git diff | wc -c)" = 0 ]
 	python3 -c '\
-	  new_setup_py = open("setup.py").read().replace(".dev0", ""); \
-	  open("setup.py", "w").write(new_setup_py)'
+	  old_version = open("version").read().strip(); \
+	  new_version = old_version.replace(".dev0", ""); \
+	  open("version", "w").write("{}\n".format(new_version))'
 	$(MAKE) dist
-	twine upload dist/requests_pkcs12-$$(python3 setup.py --version)*
-	git commit -am "Release $$(python3 setup.py --version)"
-	git tag -sm "$$(python3 setup.py --version)" "$$(python3 setup.py --version)"
+	twine upload dist/requests_pkcs12-$$(cat version)*
+	git commit -am "Release $$(cat version)"
+	git tag -sm "$$(cat version)" "$$(cat version)"
 	python3 -c '\
-	  import subprocess; \
-	  old_version = subprocess.check_output(["python3", "setup.py", "--version"], encoding="ascii").strip(); \
+	  old_version = open("version").read().strip(); \
 	  new_version = "1.{}.dev0".format(int(old_version.split(".")[1]) + 1); \
-	  new_setup_py = open("setup.py").read().replace("version='\''{}".format(old_version), "version='\''{}".format(new_version)); \
-	  open("setup.py", "w").write(new_setup_py)'
-	git commit -am "Set version to $$(python3 setup.py --version)"
+	  open("version", "w").write("{}\n".format(new_version))'
+	git commit -am "Set version to $$(cat version)"
 	git push
 	git push --tags
