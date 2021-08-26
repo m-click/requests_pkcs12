@@ -16,18 +16,14 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 '''
 
+import OpenSSL.crypto
+import cryptography.hazmat.primitives.serialization.pkcs12
+import datetime
 import os
-from OpenSSL.crypto import PKey, X509
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
-from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
-from datetime import datetime
-from requests import Session
-from requests import request as request_orig
-from requests.adapters import HTTPAdapter
-from urllib3.contrib.pyopenssl import PyOpenSSLContext
-from ssl import SSLContext
-from tempfile import NamedTemporaryFile
+import requests.adapters
+import ssl
+import tempfile
+import urllib3.contrib.pyopenssl
 
 try:
     from ssl import PROTOCOL_TLS as default_ssl_protocol
@@ -36,35 +32,45 @@ except ImportError:
 
 def check_cert_not_after(cert):
     cert_not_after = cert.not_valid_after
-    if cert_not_after < datetime.utcnow():
+    if cert_not_after < datetime.datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
 def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
-    private_key, cert, ca_certs = load_key_and_certificates(pkcs12_data, pkcs12_password_bytes)
+    private_key, cert, ca_certs = cryptography.hazmat.primitives.serialization.pkcs12.load_key_and_certificates(
+        pkcs12_data,
+        pkcs12_password_bytes
+    )
     check_cert_not_after(cert)
-    ssl_context = PyOpenSSLContext(ssl_protocol)
-    ssl_context._ctx.use_certificate(X509.from_cryptography(cert))
+    ssl_context = urllib3.contrib.pyopenssl.PyOpenSSLContext(ssl_protocol)
+    ssl_context._ctx.use_certificate(OpenSSL.crypto.X509.from_cryptography(cert))
     if ca_certs:
         for ca_cert in ca_certs:
             check_cert_not_after(ca_cert)
-            ssl_context._ctx.add_extra_chain_cert(X509.from_cryptography(ca_cert))
-    ssl_context._ctx.use_privatekey(PKey.from_cryptography_key(private_key))
+            ssl_context._ctx.add_extra_chain_cert(OpenSSL.crypto.X509.from_cryptography(ca_cert))
+    ssl_context._ctx.use_privatekey(OpenSSL.crypto.PKey.from_cryptography_key(private_key))
     return ssl_context
 
 def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
-    private_key, cert, ca_certs = load_key_and_certificates(pkcs12_data, pkcs12_password_bytes)
+    private_key, cert, ca_certs = cryptography.hazmat.primitives.serialization.pkcs12.load_key_and_certificates(
+        pkcs12_data,
+        pkcs12_password_bytes
+    )
     check_cert_not_after(cert)
-    ssl_context = SSLContext(ssl_protocol)
-    with NamedTemporaryFile(delete=False) as c:
+    ssl_context = ssl.SSLContext(ssl_protocol)
+    with tempfile.NamedTemporaryFile(delete=False) as c:
         try:
-            pk_buf = private_key.private_bytes(Encoding.PEM, PrivateFormat.TraditionalOpenSSL, serialization.KeySerializationEncryption)
+            pk_buf = private_key.private_bytes(
+                cryptography.hazmat.primitives.serialization.Encoding.PEM,
+                cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
+                cryptography.hazmat.primitives.serialization.KeySerializationEncryption
+            )
             c.write(pk_buf)
-            buf = cert.public_bytes(Encoding.PEM)
+            buf = cert.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
             c.write(buf)
             if ca_certs:
                 for ca_cert in ca_certs:
                     check_cert_not_after(ca_cert)
-                    buf = ca_cert.public_bytes(Encoding.PEM)
+                    buf = ca_cert.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
                     c.write(buf)
             c.flush()
             c.close()
@@ -73,7 +79,7 @@ def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=defau
             os.remove(c.name)
     return ssl_context
 
-class Pkcs12Adapter(HTTPAdapter):
+class Pkcs12Adapter(requests.adapters.HTTPAdapter):
 
     def __init__(self, *args, **kwargs):
         pkcs12_data = kwargs.pop('pkcs12_data', None)
@@ -112,10 +118,10 @@ def request(*args, **kwargs):
     pkcs12_password = kwargs.pop('pkcs12_password', None)
     ssl_protocol = kwargs.pop('ssl_protocol', default_ssl_protocol)
     if pkcs12_data is None and pkcs12_filename is None and pkcs12_password is None:
-        return request_orig(*args, **kwargs)
+        return requests.request(*args, **kwargs)
     if 'cert' in  kwargs:
         raise ValueError('Argument "cert" conflicts with "pkcs12_*" arguments')
-    with Session() as session:
+    with requests.Session() as session:
         pkcs12_adapter = Pkcs12Adapter(
             pkcs12_data=pkcs12_data,
             pkcs12_filename=pkcs12_filename,
