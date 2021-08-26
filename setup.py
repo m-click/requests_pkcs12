@@ -13,6 +13,12 @@ setup(
         'pyOpenSSL (>=20.0.1)',
         'requests (>=2.26.0)',
     ],
+    extras_require={
+        'dev': [
+            'twine (>=3.4.2)',
+            'wheel (>=0.37.0)',
+        ],
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

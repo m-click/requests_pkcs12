@@ -32,8 +32,7 @@ clean:
 	rm -rf .venv
 	python3 -m venv .venv
 	. .venv/bin/activate && python3 -m pip install --upgrade pip
-	. .venv/bin/activate && python3 -m pip install twine wheel
-	. .venv/bin/activate && python3 -m pip install -e .
+	. .venv/bin/activate && python3 -m pip install -e '.[dev]'
 	touch $@
 
 .PHONY: dist
