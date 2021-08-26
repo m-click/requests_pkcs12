@@ -17,6 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 '''
 
 import os
+from OpenSSL.crypto import PKey, X509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
@@ -42,12 +43,12 @@ def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol
     private_key, cert, ca_certs = load_key_and_certificates(pkcs12_data, pkcs12_password_bytes)
     check_cert_not_after(cert)
     ssl_context = PyOpenSSLContext(ssl_protocol)
-    ssl_context._ctx.use_certificate(cert)
+    ssl_context._ctx.use_certificate(X509.from_cryptography(cert))
     if ca_certs:
         for ca_cert in ca_certs:
             check_cert_not_after(ca_cert)
-            ssl_context._ctx.add_extra_chain_cert(ca_cert)
-    ssl_context._ctx.use_privatekey(private_key)
+            ssl_context._ctx.add_extra_chain_cert(X509.from_cryptography(ca_cert))
+    ssl_context._ctx.use_privatekey(PKey.from_cryptography_key(private_key))
     return ssl_context
 
 def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
