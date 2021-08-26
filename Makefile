@@ -26,7 +26,7 @@ usage:
 
 .PHONY: clean
 clean:
-	rm -rf .venv *.egg-info/ build/ dist/
+	rm -rf *.egg-info/ .venv __pycache__/ build/ dist/
 
 .venv/finished:
 	rm -rf .venv
