@@ -35,8 +35,12 @@ clean:
 	. .venv/bin/activate && python3 -m pip install -e '.[dev]'
 	touch $@
 
+.PHONY: check
+check: .venv/finished
+	. .venv/bin/activate && python3 -m requests_pkcs12
+
 .PHONY: dist
-dist: .venv/finished
+dist: check .venv/finished
 	rm -rf *.egg-info/ build/ dist/
 	. .venv/bin/activate && python3 setup.py sdist
 	. .venv/bin/activate && python3 setup.py bdist_wheel

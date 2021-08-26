@@ -17,7 +17,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 '''
 
 import OpenSSL.crypto
+import cryptography.hazmat.backends
+import cryptography.hazmat.primitives.asymmetric.rsa
+import cryptography.hazmat.primitives.hashes
 import cryptography.hazmat.primitives.serialization.pkcs12
+import cryptography.x509.oid
 import datetime
 import os
 import requests.adapters
@@ -154,3 +158,45 @@ def post(*args, **kwargs):
 
 def put(*args, **kwargs):
     return request('put', *args, **kwargs)
+
+def selftest():
+    key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(public_exponent=65537, key_size=4096)
+    cert = cryptography.x509.CertificateBuilder().subject_name(
+        cryptography.x509.Name([
+            cryptography.x509.NameAttribute(cryptography.x509.oid.NameOID.COMMON_NAME, 'test'),
+        ])
+    ).issuer_name(
+        cryptography.x509.Name([
+            cryptography.x509.NameAttribute(cryptography.x509.oid.NameOID.COMMON_NAME, 'test'),
+        ])
+    ).public_key(
+        key.public_key()
+    ).serial_number(
+        cryptography.x509.random_serial_number()
+    ).not_valid_before(
+        datetime.datetime.utcnow()
+    ).not_valid_after(
+        datetime.datetime.utcnow() + datetime.timedelta(days=1)
+    ).sign(
+        key,
+        cryptography.hazmat.primitives.hashes.SHA512(),
+        cryptography.hazmat.backends.default_backend()
+    )
+    pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
+        name=b'test',
+        key=key,
+        cert=cert,
+        cas=[cert, cert, cert],
+        encryption_algorithm=cryptography.hazmat.primitives.serialization.BestAvailableEncryption(b'correcthorsebatterystaple')
+    )
+    response = get(
+        'https://example.com/',
+        pkcs12_data=pkcs12_data,
+        pkcs12_password='correcthorsebatterystaple'
+    )
+    if response.status_code != 200:
+        raise Exception('Unexpected response: {response!r}'.format(**locals()))
+    print('Selftest succeeded.')
+
+if __name__ == '__main__':
+    selftest()
