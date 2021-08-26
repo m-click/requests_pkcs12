@@ -33,6 +33,7 @@ clean:
 	python3 -m venv .venv
 	. .venv/bin/activate && python3 -m pip install --upgrade pip
 	. .venv/bin/activate && python3 -m pip install twine wheel
+	. .venv/bin/activate && python3 -m pip install -e .
 	touch $@
 
 .PHONY: dist
