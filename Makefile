@@ -20,6 +20,7 @@ usage:
 	@echo 'Usage:'
 	@echo ''
 	@echo '    make clean'
+	@echo '    make check'
 	@echo '    make dist'
 	@echo '    make release'
 	@echo ''
