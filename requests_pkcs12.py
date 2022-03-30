@@ -66,7 +66,7 @@ def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=defau
             pk_buf = private_key.private_bytes(
                 cryptography.hazmat.primitives.serialization.Encoding.PEM,
                 cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
-                cryptography.hazmat.primitives.serialization.KeySerializationEncryption
+                cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password=pkcs12_password_bytes)
             )
             c.write(pk_buf)
             buf = cert.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
