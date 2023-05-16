@@ -16,7 +16,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 '''
 
-import OpenSSL.crypto
 import cryptography.hazmat.backends
 import cryptography.hazmat.primitives.asymmetric.rsa
 import cryptography.hazmat.primitives.hashes
@@ -27,10 +26,9 @@ import os
 import requests.adapters
 import ssl
 import tempfile
-import urllib3.contrib.pyopenssl
 
 try:
-    from ssl import PROTOCOL_TLS as default_ssl_protocol
+    from ssl import PROTOCOL_TLS_CLIENT as default_ssl_protocol
 except ImportError:
     from ssl import PROTOCOL_SSLv23 as default_ssl_protocol
 
@@ -38,21 +36,6 @@ def check_cert_not_after(cert):
     cert_not_after = cert.not_valid_after
     if cert_not_after < datetime.datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
-
-def create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
-    private_key, cert, ca_certs = cryptography.hazmat.primitives.serialization.pkcs12.load_key_and_certificates(
-        pkcs12_data,
-        pkcs12_password_bytes
-    )
-    check_cert_not_after(cert)
-    ssl_context = urllib3.contrib.pyopenssl.PyOpenSSLContext(ssl_protocol)
-    ssl_context._ctx.use_certificate(OpenSSL.crypto.X509.from_cryptography(cert))
-    if ca_certs:
-        for ca_cert in ca_certs:
-            check_cert_not_after(ca_cert)
-            ssl_context._ctx.add_extra_chain_cert(OpenSSL.crypto.X509.from_cryptography(ca_cert))
-    ssl_context._ctx.use_privatekey(OpenSSL.crypto.PKey.from_cryptography_key(private_key))
-    return ssl_context
 
 def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
     private_key, cert, ca_certs = cryptography.hazmat.primitives.serialization.pkcs12.load_key_and_certificates(
@@ -103,7 +86,7 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
             pkcs12_password_bytes = pkcs12_password
         else:
             pkcs12_password_bytes = pkcs12_password.encode('utf8')
-        self.ssl_context = create_pyopenssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
+        self.ssl_context = create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
 
     def init_poolmanager(self, *args, **kwargs):
