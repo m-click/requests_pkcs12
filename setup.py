@@ -10,9 +10,7 @@ setup(
     license='ISC',
     install_requires=[
         'cryptography (>=3.4.7)',
-        'pyOpenSSL (>=20.0.1)',
         'requests (>=2.26.0)',
-        'urllib3 (>=1.26.13,<2.0)',
     ],
     extras_require={
         'dev': [
