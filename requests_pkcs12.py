@@ -37,7 +37,7 @@ def check_cert_not_after(cert):
     if cert_not_after < datetime.datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
-def create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
+def create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
     private_key, cert, ca_certs = cryptography.hazmat.primitives.serialization.pkcs12.load_key_and_certificates(
         pkcs12_data,
         pkcs12_password_bytes
@@ -86,7 +86,7 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
             pkcs12_password_bytes = pkcs12_password
         else:
             pkcs12_password_bytes = pkcs12_password.encode('utf8')
-        self.ssl_context = create_ssl_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
+        self.ssl_context = create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
 
     def init_poolmanager(self, *args, **kwargs):
