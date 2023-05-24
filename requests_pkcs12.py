@@ -37,7 +37,7 @@ def check_cert_not_after(cert):
     if cert_not_after < datetime.datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
-def create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
+def create_sslcontext(pkcs12_data, pkcs12_password_bytes=None, ssl_protocol=default_ssl_protocol):
     private_key, cert, ca_certs = cryptography.hazmat.primitives.serialization.pkcs12.load_key_and_certificates(
         pkcs12_data,
         pkcs12_password_bytes
@@ -46,11 +46,18 @@ def create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_s
     ssl_context = ssl.SSLContext(ssl_protocol)
     with tempfile.NamedTemporaryFile(delete=False) as c:
         try:
-            pk_buf = private_key.private_bytes(
-                cryptography.hazmat.primitives.serialization.Encoding.PEM,
-                cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
-                cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password=pkcs12_password_bytes)
-            )
+            if pkcs12_password_bytes:
+                pk_buf = private_key.private_bytes(
+                    cryptography.hazmat.primitives.serialization.Encoding.PEM,
+                    cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
+                    cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password=pkcs12_password_bytes)
+                )
+            else:
+                pk_buf = private_key.private_bytes(
+                    cryptography.hazmat.primitives.serialization.Encoding.PEM,
+                    cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
+                    cryptography.hazmat.primitives.serialization.NoEncryption()
+                )
             c.write(pk_buf)
             buf = cert.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
             c.write(buf)
@@ -77,14 +84,12 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
             raise ValueError('Both arguments "pkcs12_data" and "pkcs12_filename" are missing')
         if pkcs12_data is not None and pkcs12_filename is not None:
             raise ValueError('Argument "pkcs12_data" conflicts with "pkcs12_filename"')
-        if pkcs12_password is None:
-            raise ValueError('Argument "pkcs12_password" is missing')
         if pkcs12_filename is not None:
             with open(pkcs12_filename, 'rb') as pkcs12_file:
                 pkcs12_data = pkcs12_file.read()
         if isinstance(pkcs12_password, bytes):
             pkcs12_password_bytes = pkcs12_password
-        else:
+        elif isinstance(pkcs12_password, str):
             pkcs12_password_bytes = pkcs12_password.encode('utf8')
         self.ssl_context = create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
