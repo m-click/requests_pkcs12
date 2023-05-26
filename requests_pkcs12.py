@@ -46,7 +46,7 @@ def create_sslcontext(pkcs12_data, pkcs12_password_bytes=None, ssl_protocol=defa
     ssl_context = ssl.SSLContext(ssl_protocol)
     with tempfile.NamedTemporaryFile(delete=False) as c:
         try:
-            if pkcs12_password_bytes:
+            if pkcs12_password_bytes != None:
                 pk_buf = private_key.private_bytes(
                     cryptography.hazmat.primitives.serialization.Encoding.PEM,
                     cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
@@ -84,6 +84,8 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
             raise ValueError('Both arguments "pkcs12_data" and "pkcs12_filename" are missing')
         if pkcs12_data is not None and pkcs12_filename is not None:
             raise ValueError('Argument "pkcs12_data" conflicts with "pkcs12_filename"')
+        if pkcs12_password != None and pkcs12_password == "":
+            raise ValueError('Password must be 1 or more bytes.')
         if pkcs12_filename is not None:
             with open(pkcs12_filename, 'rb') as pkcs12_file:
                 pkcs12_data = pkcs12_file.read()
@@ -178,34 +180,39 @@ def selftest():
             "pkcs12_password": b"correcthorsebatterystaple",
             "expected_status_code": 200,
         },
-        "withoutEncryption": {
-            "pkcs12_password": None,
-            "expected_status_code": 200,
-        },
         "withEmptyPassword": {
             "pkcs12_password": b"",
+            "expected_status_code": 200,
+        },
+        "withoutEncryption": {
+            "pkcs12_password": None,
             "expected_status_code": 200,
         },
     }
     for test_case_name, test_case in test_cases.items():
         password = test_case['pkcs12_password']
         print(f"Testing {test_case_name}")
-        algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password) \
-            if test_case['pkcs12_password'] else cryptography.hazmat.primitives.serialization.NoEncryption()
-        pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
-            name=b'test',
-            key=key,
-            cert=cert,
-            cas=[cert, cert, cert],
-            encryption_algorithm=algorithm
-        )
-        response = get(
-            'https://example.com/',
-            pkcs12_data=pkcs12_data,
-            pkcs12_password=test_case['pkcs12_password']
-        )
-        if response.status_code != 200:
-            raise Exception('Unexpected response: {response!r}'.format(**locals()))
+        try:
+            algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password) \
+                if test_case['pkcs12_password']!=None else cryptography.hazmat.primitives.serialization.NoEncryption()
+            pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
+                name=b'test',
+                key=key,
+                cert=cert,
+                cas=[cert, cert, cert],
+                encryption_algorithm=algorithm
+            )
+            response = get(
+                'https://example.com/',
+                pkcs12_data=pkcs12_data,
+                pkcs12_password=test_case['pkcs12_password']
+            )
+            if response.status_code != 200:
+                raise Exception('Unexpected response: {response!r}'.format(**locals()))
+        except ValueError as e:
+            if test_case == 'withEmptyPassword' and str(e) != 'Password must be 1 or more bytes.':
+                raise(e)
+            continue
 
     print('Selftest succeeded.')
 
