@@ -37,7 +37,7 @@ def check_cert_not_after(cert):
     if cert_not_after < datetime.datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
-def create_sslcontext(pkcs12_data, pkcs12_password_bytes=None, ssl_protocol=default_ssl_protocol):
+def create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
     private_key, cert, ca_certs = cryptography.hazmat.primitives.serialization.pkcs12.load_key_and_certificates(
         pkcs12_data,
         pkcs12_password_bytes
@@ -46,7 +46,7 @@ def create_sslcontext(pkcs12_data, pkcs12_password_bytes=None, ssl_protocol=defa
     ssl_context = ssl.SSLContext(ssl_protocol)
     with tempfile.NamedTemporaryFile(delete=False) as c:
         try:
-            if pkcs12_password_bytes != None:
+            if pkcs12_password_bytes is not None:
                 pk_buf = private_key.private_bytes(
                     cryptography.hazmat.primitives.serialization.Encoding.PEM,
                     cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
@@ -84,7 +84,7 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
             raise ValueError('Both arguments "pkcs12_data" and "pkcs12_filename" are missing')
         if pkcs12_data is not None and pkcs12_filename is not None:
             raise ValueError('Argument "pkcs12_data" conflicts with "pkcs12_filename"')
-        if pkcs12_password != None and pkcs12_password == "":
+        if pkcs12_password is not None and pkcs12_password == "":
             raise ValueError('Password must be 1 or more bytes.')
         if pkcs12_filename is not None:
             with open(pkcs12_filename, 'rb') as pkcs12_file:
@@ -194,7 +194,7 @@ def selftest():
         print(f"Testing {test_case_name}")
         try:
             algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password) \
-                if test_case['pkcs12_password']!=None else cryptography.hazmat.primitives.serialization.NoEncryption()
+                if test_case['pkcs12_password'] is not None else cryptography.hazmat.primitives.serialization.NoEncryption()
             pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
                 name=b'test',
                 key=key,
