@@ -104,7 +104,7 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
         try:
             if verify is False:
                 self.ssl_context.check_hostname = False
-            super(Pkcs12Adapter, self).cert_verify(conn, url, verify, cert)
+            return super(Pkcs12Adapter, self).cert_verify(conn, url, verify, cert)
         finally:
             self.ssl_context.check_hostname = check_hostname
 
