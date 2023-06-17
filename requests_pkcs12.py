@@ -113,7 +113,7 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
         try:
             if verify is False:
                 self.ssl_context.check_hostname = False
-            return super(Pkcs12Adapter, self).send(request, stream=False, timeout=None, verify=True, cert=None, proxies=None)
+            return super(Pkcs12Adapter, self).send(request, stream, timeout, verify, cert, proxies)
         finally:
             self.ssl_context.check_hostname = check_hostname
 
