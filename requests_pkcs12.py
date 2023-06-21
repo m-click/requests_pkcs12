@@ -99,6 +99,24 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
             kwargs['ssl_context'] = self.ssl_context
         return super(Pkcs12Adapter, self).proxy_manager_for(*args, **kwargs)
 
+    def cert_verify(self, conn, url, verify, cert):
+        check_hostname = self.ssl_context.check_hostname
+        try:
+            if verify is False:
+                self.ssl_context.check_hostname = False
+            return super(Pkcs12Adapter, self).cert_verify(conn, url, verify, cert)
+        finally:
+            self.ssl_context.check_hostname = check_hostname
+
+    def send(self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None):
+        check_hostname = self.ssl_context.check_hostname
+        try:
+            if verify is False:
+                self.ssl_context.check_hostname = False
+            return super(Pkcs12Adapter, self).send(request, stream, timeout, verify, cert, proxies)
+        finally:
+            self.ssl_context.check_hostname = check_hostname
+
 def request(*args, **kwargs):
     pkcs12_data = kwargs.pop('pkcs12_data', None)
     pkcs12_filename = kwargs.pop('pkcs12_filename', None)
