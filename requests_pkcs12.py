@@ -84,16 +84,17 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
             raise ValueError('Both arguments "pkcs12_data" and "pkcs12_filename" are missing')
         if pkcs12_data is not None and pkcs12_filename is not None:
             raise ValueError('Argument "pkcs12_data" conflicts with "pkcs12_filename"')
-        if pkcs12_password is not None and pkcs12_password == "":
-            raise ValueError('Password must be 1 or more bytes.')
         if pkcs12_filename is not None:
             with open(pkcs12_filename, 'rb') as pkcs12_file:
                 pkcs12_data = pkcs12_file.read()
-        pkcs12_password_bytes = None
-        if isinstance(pkcs12_password, bytes):
+        if pkcs12_password is None:
+            pkcs12_password_bytes = None
+        elif isinstance(pkcs12_password, bytes):
             pkcs12_password_bytes = pkcs12_password
         elif isinstance(pkcs12_password, str):
             pkcs12_password_bytes = pkcs12_password.encode('utf8')
+        else:
+            raise TypeError('Password must be a None, string or bytes.')
 
         self.ssl_context = create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
@@ -169,6 +170,30 @@ def post(*args, **kwargs):
 def put(*args, **kwargs):
     return request('put', *args, **kwargs)
 
+def execute_test_case(test_case, key, cert):
+    password = test_case['pkcs12_password']
+    try:
+        algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password) \
+            if test_case['pkcs12_password'] is not None else cryptography.hazmat.primitives.serialization.NoEncryption()
+        pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
+            name=b'test',
+            key=key,
+            cert=cert,
+            cas=[cert, cert, cert],
+            encryption_algorithm=algorithm
+        )
+        response = get(
+            'https://example.com/',
+            pkcs12_data=pkcs12_data,
+            pkcs12_password=test_case['pkcs12_password']
+        )
+        if response.status_code != test_case['expected_status_code']:
+            raise Exception('Unexpected response: {response!r}'.format(**locals()))
+    except ValueError as e:
+        if test_case['expected_exception_message'] is None or str(e) != test_case['expected_exception_message']:
+            raise(e)
+
+
 def selftest():
     key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(public_exponent=65537, key_size=4096)
     cert = cryptography.x509.CertificateBuilder().subject_name(
@@ -197,40 +222,23 @@ def selftest():
         "withEncryption": {
             "pkcs12_password": b"correcthorsebatterystaple",
             "expected_status_code": 200,
+            "expected_exception_message": None,
         },
         "withEmptyPassword": {
             "pkcs12_password": b"",
             "expected_status_code": 200,
+            "expected_exception_message": "Password must be 1 or more bytes.",
         },
         "withoutEncryption": {
             "pkcs12_password": None,
             "expected_status_code": 200,
+            "expected_exception_message": None,
         },
     }
+
     for test_case_name, test_case in test_cases.items():
-        password = test_case['pkcs12_password']
         print(f"Testing {test_case_name}")
-        try:
-            algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password) \
-                if test_case['pkcs12_password'] is not None else cryptography.hazmat.primitives.serialization.NoEncryption()
-            pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
-                name=b'test',
-                key=key,
-                cert=cert,
-                cas=[cert, cert, cert],
-                encryption_algorithm=algorithm
-            )
-            response = get(
-                'https://example.com/',
-                pkcs12_data=pkcs12_data,
-                pkcs12_password=test_case['pkcs12_password']
-            )
-            if response.status_code != 200:
-                raise Exception('Unexpected response: {response!r}'.format(**locals()))
-        except ValueError as e:
-            if test_case == 'withEmptyPassword' and str(e) != 'Password must be 1 or more bytes.':
-                raise(e)
-            continue
+        execute_test_case(test_case, key, cert)
 
     print('Selftest succeeded.')
 
