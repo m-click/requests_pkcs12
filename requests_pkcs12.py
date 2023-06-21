@@ -170,7 +170,8 @@ def post(*args, **kwargs):
 def put(*args, **kwargs):
     return request('put', *args, **kwargs)
 
-def execute_test_case(test_case, key, cert):
+def execute_test_case(test_case_name, test_case, key, cert):
+    print(f"Testing {test_case_name}")
     password = test_case['pkcs12_password']
     try:
         algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password) \
@@ -237,8 +238,7 @@ def selftest():
     }
 
     for test_case_name, test_case in test_cases.items():
-        print(f"Testing {test_case_name}")
-        execute_test_case(test_case, key, cert)
+        execute_test_case(test_case_name, test_case, key, cert)
 
     print('Selftest succeeded.')
 
