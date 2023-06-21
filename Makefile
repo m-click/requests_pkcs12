@@ -45,8 +45,6 @@ dist: check .venv/finished
 	rm -rf *.egg-info/ build/ dist/
 	. .venv/bin/activate && python3 setup.py sdist
 	. .venv/bin/activate && python3 setup.py bdist_wheel
-	gpg --detach-sign -a dist/requests_pkcs12-*.tar.gz
-	gpg --detach-sign -a dist/requests_pkcs12-*-py3-none-any.whl
 
 .PHONY: release
 release: clean
