@@ -194,7 +194,6 @@ def execute_test_case(test_case_name, test_case, key, cert):
         if test_case['expected_exception_message'] is None or str(e) != test_case['expected_exception_message']:
             raise(e)
 
-
 def selftest():
     key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(public_exponent=65537, key_size=4096)
     cert = cryptography.x509.CertificateBuilder().subject_name(
