@@ -170,12 +170,13 @@ def post(*args, **kwargs):
 def put(*args, **kwargs):
     return request('put', *args, **kwargs)
 
-def execute_test_case(test_case_name, test_case, key, cert):
+def execute_test_case(test_case_name, key, cert, pkcs12_password, expected_status_code, expected_exception_message):
     print(f"Testing {test_case_name}")
-    password = test_case['pkcs12_password']
     try:
-        algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password) \
-            if test_case['pkcs12_password'] is not None else cryptography.hazmat.primitives.serialization.NoEncryption()
+        if pkcs12_password is None:
+            algorithm = cryptography.hazmat.primitives.serialization.NoEncryption()
+        else:
+            algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(pkcs12_password)
         pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
             name=b'test',
             key=key,
@@ -186,12 +187,12 @@ def execute_test_case(test_case_name, test_case, key, cert):
         response = get(
             'https://example.com/',
             pkcs12_data=pkcs12_data,
-            pkcs12_password=test_case['pkcs12_password']
+            pkcs12_password=pkcs12_password
         )
-        if response.status_code != test_case['expected_status_code']:
+        if response.status_code != expected_status_code:
             raise Exception('Unexpected response: {response!r}'.format(**locals()))
     except ValueError as e:
-        if test_case['expected_exception_message'] is None or str(e) != test_case['expected_exception_message']:
+        if expected_exception_message is None or str(e) != expected_exception_message:
             raise(e)
 
 def selftest():
@@ -217,28 +218,9 @@ def selftest():
         cryptography.hazmat.primitives.hashes.SHA512(),
         cryptography.hazmat.backends.default_backend()
     )
-
-    test_cases = {
-        "withEncryption": {
-            "pkcs12_password": b"correcthorsebatterystaple",
-            "expected_status_code": 200,
-            "expected_exception_message": None,
-        },
-        "withEmptyPassword": {
-            "pkcs12_password": b"",
-            "expected_status_code": 200,
-            "expected_exception_message": "Password must be 1 or more bytes.",
-        },
-        "withoutEncryption": {
-            "pkcs12_password": None,
-            "expected_status_code": 200,
-            "expected_exception_message": None,
-        },
-    }
-
-    for test_case_name, test_case in test_cases.items():
-        execute_test_case(test_case_name, test_case, key, cert)
-
+    execute_test_case('withEncryption', key, cert, b'correcthorsebatterystaple', 200, None)
+    execute_test_case('withEmptyPassword', key, cert, b'', 200, 'Password must be 1 or more bytes.')
+    execute_test_case('withoutEncryption', key, cert, None, 200, None)
     print('Selftest succeeded.')
 
 if __name__ == '__main__':
