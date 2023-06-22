@@ -191,6 +191,8 @@ def execute_test_case(test_case_name, key, cert, pkcs12_password, expected_statu
         )
         if response.status_code != expected_status_code:
             raise Exception('Unexpected response: {response!r}'.format(**locals()))
+        if expected_exception_message is not None:
+            raise Exception('Missing expected exception: {expected_exception_message!r}'.format(**locals()))
     except ValueError as e:
         if expected_exception_message is None or str(e) != expected_exception_message:
             raise(e)
