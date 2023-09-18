@@ -172,8 +172,6 @@ def put(*args, **kwargs):
 def _create_test_cert_pkcs12(key, cert, pkcs12_password_for_creation):
     if pkcs12_password_for_creation is None:
         algorithm = cryptography.hazmat.primitives.serialization.NoEncryption()
-    elif isinstance(pkcs12_password_for_creation, str):
-        algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(pkcs12_password_for_creation.encode('utf8'))
     else:
         algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(pkcs12_password_for_creation)
     pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
@@ -185,10 +183,10 @@ def _create_test_cert_pkcs12(key, cert, pkcs12_password_for_creation):
     )
     return pkcs12_data
 
-def _execute_test_case(test_case_name, key, cert, pkcs12_password, expected_status_code, expected_exception_message):
+def _execute_test_case(test_case_name, key, cert, pkcs12_password_for_creation, pkcs12_password, expected_status_code, expected_exception_message):
     print(f"Testing {test_case_name}")
     try:
-        pkcs12_data = _create_test_cert_pkcs12(key, cert, pkcs12_password)
+        pkcs12_data = _create_test_cert_pkcs12(key, cert, pkcs12_password_for_creation)
         response = get(
             'https://example.com/',
             pkcs12_data=pkcs12_data,
@@ -225,9 +223,9 @@ def test():
         cryptography.hazmat.primitives.hashes.SHA512(),
         cryptography.hazmat.backends.default_backend()
     )
-    _execute_test_case('with encryption, password provided as bytes', key, cert, b'correcthorsebatterystaple', 200, None)
-    _execute_test_case('with encryption, password provided as string', key, cert, 'correcthorsebatterystaple', 200, None)
-    _execute_test_case('with empty password provided as bytes', key, cert, b'', 200, 'Password must be 1 or more bytes.')
-    _execute_test_case('with empty password provided as string', key, cert, '', 200, 'Password must be 1 or more bytes.')
-    _execute_test_case('without encryption', key, cert, None, 200, None)
+    _execute_test_case('with encryption, password provided as bytes', key, cert, b'correcthorsebatterystaple', b'correcthorsebatterystaple', 200, None)
+    _execute_test_case('with encryption, password provided as string', key, cert, b'correcthorsebatterystaple', 'correcthorsebatterystaple', 200, None)
+    _execute_test_case('with empty password provided as bytes', key, cert, b'', b'', 200, 'Password must be 1 or more bytes.')
+    _execute_test_case('with empty password provided as string', key, cert, b'', '', 200, 'Password must be 1 or more bytes.')
+    _execute_test_case('without encryption', key, cert, None, None, 200, None)
     print('All tests succeeded.')
