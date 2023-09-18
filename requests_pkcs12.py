@@ -32,17 +32,17 @@ try:
 except ImportError:
     from ssl import PROTOCOL_SSLv23 as default_ssl_protocol
 
-def check_cert_not_after(cert):
+def _check_cert_not_after(cert):
     cert_not_after = cert.not_valid_after
     if cert_not_after < datetime.datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
-def create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
+def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
     private_key, cert, ca_certs = cryptography.hazmat.primitives.serialization.pkcs12.load_key_and_certificates(
         pkcs12_data,
         pkcs12_password_bytes
     )
-    check_cert_not_after(cert)
+    _check_cert_not_after(cert)
     ssl_context = ssl.SSLContext(ssl_protocol)
     with tempfile.NamedTemporaryFile(delete=False) as c:
         try:
@@ -63,7 +63,7 @@ def create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_s
             c.write(buf)
             if ca_certs:
                 for ca_cert in ca_certs:
-                    check_cert_not_after(ca_cert)
+                    _check_cert_not_after(ca_cert)
                     buf = ca_cert.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
                     c.write(buf)
             c.flush()
@@ -95,7 +95,7 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
             pkcs12_password_bytes = pkcs12_password.encode('utf8')
         else:
             raise TypeError('Password must be a None, string or bytes.')
-        self.ssl_context = create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
+        self.ssl_context = _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
 
     def init_poolmanager(self, *args, **kwargs):
@@ -169,7 +169,7 @@ def post(*args, **kwargs):
 def put(*args, **kwargs):
     return request('put', *args, **kwargs)
 
-def create_test_cert_pkcs12(key, cert, pkcs12_password_for_creation):
+def _create_test_cert_pkcs12(key, cert, pkcs12_password_for_creation):
     if pkcs12_password_for_creation is None:
         algorithm = cryptography.hazmat.primitives.serialization.NoEncryption()
     elif isinstance(pkcs12_password_for_creation, str):
@@ -185,10 +185,10 @@ def create_test_cert_pkcs12(key, cert, pkcs12_password_for_creation):
     )
     return pkcs12_data
 
-def execute_test_case(test_case_name, key, cert, pkcs12_password, expected_status_code, expected_exception_message):
+def _execute_test_case(test_case_name, key, cert, pkcs12_password, expected_status_code, expected_exception_message):
     print(f"Testing {test_case_name}")
     try:
-        pkcs12_data = create_test_cert_pkcs12(key, cert, pkcs12_password)
+        pkcs12_data = _create_test_cert_pkcs12(key, cert, pkcs12_password)
         response = get(
             'https://example.com/',
             pkcs12_data=pkcs12_data,
@@ -225,9 +225,9 @@ def test():
         cryptography.hazmat.primitives.hashes.SHA512(),
         cryptography.hazmat.backends.default_backend()
     )
-    execute_test_case('with encryption, password provided as bytes', key, cert, b'correcthorsebatterystaple', 200, None)
-    execute_test_case('with encryption, password provided as string', key, cert, 'correcthorsebatterystaple', 200, None)
-    execute_test_case('with empty password provided as bytes', key, cert, b'', 200, 'Password must be 1 or more bytes.')
-    execute_test_case('with empty password provided as string', key, cert, '', 200, 'Password must be 1 or more bytes.')
-    execute_test_case('without encryption', key, cert, None, 200, None)
+    _execute_test_case('with encryption, password provided as bytes', key, cert, b'correcthorsebatterystaple', 200, None)
+    _execute_test_case('with encryption, password provided as string', key, cert, 'correcthorsebatterystaple', 200, None)
+    _execute_test_case('with empty password provided as bytes', key, cert, b'', 200, 'Password must be 1 or more bytes.')
+    _execute_test_case('with empty password provided as string', key, cert, '', 200, 'Password must be 1 or more bytes.')
+    _execute_test_case('without encryption', key, cert, None, 200, None)
     print('All tests succeeded.')
