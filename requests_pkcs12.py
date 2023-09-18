@@ -227,6 +227,3 @@ def test():
     execute_test_case('with empty password provided as string', key, cert, '', 200, 'Password must be 1 or more bytes.')
     execute_test_case('without encryption', key, cert, None, 200, None)
     print('All tests succeeded.')
-
-if __name__ == '__main__':
-    test()

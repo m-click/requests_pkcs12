@@ -38,7 +38,7 @@ clean:
 
 .PHONY: check
 check: .venv/finished
-	. .venv/bin/activate && python3 -m requests_pkcs12
+	. .venv/bin/activate && python3 -c 'from requests_pkcs12 import test; test()'
 
 .PHONY: dist
 dist: check .venv/finished
