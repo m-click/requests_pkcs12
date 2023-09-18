@@ -46,17 +46,17 @@ def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol):
     ssl_context = ssl.SSLContext(ssl_protocol)
     with tempfile.NamedTemporaryFile(delete=False) as c:
         try:
-            if pkcs12_password_bytes is not None:
+            if pkcs12_password_bytes is None:
                 pk_buf = private_key.private_bytes(
                     cryptography.hazmat.primitives.serialization.Encoding.PEM,
                     cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
-                    cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password=pkcs12_password_bytes)
+                    cryptography.hazmat.primitives.serialization.NoEncryption()
                 )
             else:
                 pk_buf = private_key.private_bytes(
                     cryptography.hazmat.primitives.serialization.Encoding.PEM,
                     cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
-                    cryptography.hazmat.primitives.serialization.NoEncryption()
+                    cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password=pkcs12_password_bytes)
                 )
             c.write(pk_buf)
             buf = cert.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
