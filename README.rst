@@ -33,7 +33,7 @@ If you are using `requests sessions <https://requests.readthedocs.io/en/master/u
 Installation
 ------------
 
-This library is available as `PyPI package <https://pypi.python.org/pypi/requests-pkcs12>`__:
+This library is available as `PyPI package <https://pypi.org/project/requests-pkcs12/>`__:
 
 ::
 
