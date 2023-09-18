@@ -175,6 +175,8 @@ def execute_test_case(test_case_name, key, cert, pkcs12_password, expected_statu
     try:
         if pkcs12_password is None:
             algorithm = cryptography.hazmat.primitives.serialization.NoEncryption()
+        elif isinstance(pkcs12_password, str):
+            algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(pkcs12_password.encode('utf8'))
         else:
             algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(pkcs12_password)
         pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
@@ -220,9 +222,11 @@ def selftest():
         cryptography.hazmat.primitives.hashes.SHA512(),
         cryptography.hazmat.backends.default_backend()
     )
-    execute_test_case('withEncryption', key, cert, b'correcthorsebatterystaple', 200, None)
-    execute_test_case('withEmptyPassword', key, cert, b'', 200, 'Password must be 1 or more bytes.')
-    execute_test_case('withoutEncryption', key, cert, None, 200, None)
+    execute_test_case('with encryption, password provided as bytes', key, cert, b'correcthorsebatterystaple', 200, None)
+    execute_test_case('with encryption, password provided as string', key, cert, 'correcthorsebatterystaple', 200, None)
+    execute_test_case('with empty password provided as bytes', key, cert, b'', 200, 'Password must be 1 or more bytes.')
+    execute_test_case('with empty password provided as string', key, cert, '', 200, 'Password must be 1 or more bytes.')
+    execute_test_case('without encryption', key, cert, None, 200, None)
     print('Selftest succeeded.')
 
 if __name__ == '__main__':
