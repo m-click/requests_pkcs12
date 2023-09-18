@@ -169,22 +169,26 @@ def post(*args, **kwargs):
 def put(*args, **kwargs):
     return request('put', *args, **kwargs)
 
+def create_test_cert_pkcs12(key, cert, pkcs12_password_for_creation):
+    if pkcs12_password_for_creation is None:
+        algorithm = cryptography.hazmat.primitives.serialization.NoEncryption()
+    elif isinstance(pkcs12_password_for_creation, str):
+        algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(pkcs12_password_for_creation.encode('utf8'))
+    else:
+        algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(pkcs12_password_for_creation)
+    pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
+        name=b'test',
+        key=key,
+        cert=cert,
+        cas=[cert, cert, cert],
+        encryption_algorithm=algorithm
+    )
+    return pkcs12_data
+
 def execute_test_case(test_case_name, key, cert, pkcs12_password, expected_status_code, expected_exception_message):
     print(f"Testing {test_case_name}")
     try:
-        if pkcs12_password is None:
-            algorithm = cryptography.hazmat.primitives.serialization.NoEncryption()
-        elif isinstance(pkcs12_password, str):
-            algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(pkcs12_password.encode('utf8'))
-        else:
-            algorithm = cryptography.hazmat.primitives.serialization.BestAvailableEncryption(pkcs12_password)
-        pkcs12_data = cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates(
-            name=b'test',
-            key=key,
-            cert=cert,
-            cas=[cert, cert, cert],
-            encryption_algorithm=algorithm
-        )
+        pkcs12_data = create_test_cert_pkcs12(key, cert, pkcs12_password)
         response = get(
             'https://example.com/',
             pkcs12_data=pkcs12_data,
