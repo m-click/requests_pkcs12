@@ -46,7 +46,7 @@ def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol):
     ssl_context = ssl.SSLContext(ssl_protocol)
     with tempfile.NamedTemporaryFile(delete=False) as c:
         try:
-            if pkcs12_password_bytes is None:
+            if pkcs12_password_bytes is None or pkcs12_password_bytes == b'':
                 pk_buf = private_key.private_bytes(
                     cryptography.hazmat.primitives.serialization.Encoding.PEM,
                     cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
@@ -229,7 +229,7 @@ def test():
     )
     _execute_test_case('with encryption, password provided as bytes', key, cert, b'correcthorsebatterystaple', b'correcthorsebatterystaple', 200, None)
     _execute_test_case('with encryption, password provided as string', key, cert, b'correcthorsebatterystaple', 'correcthorsebatterystaple', 200, None)
-    _execute_test_case('with empty password provided as bytes', key, cert, b'', b'', 200, 'Password must be 1 or more bytes.')
-    _execute_test_case('with empty password provided as string', key, cert, b'', '', 200, 'Password must be 1 or more bytes.')
+    _execute_test_case('with empty password provided as bytes', key, cert, None, b'', 200, None)
+    _execute_test_case('with empty password provided as string', key, cert, None, '', 200, None)
     _execute_test_case('without encryption', key, cert, None, None, 200, None)
     print('All tests succeeded.')
