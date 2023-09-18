@@ -23,6 +23,7 @@ import cryptography.hazmat.primitives.serialization.pkcs12
 import cryptography.x509.oid
 import datetime
 import os
+import random
 import requests.adapters
 import ssl
 import tempfile
@@ -46,18 +47,12 @@ def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol):
     ssl_context = ssl.SSLContext(ssl_protocol)
     with tempfile.NamedTemporaryFile(delete=False) as c:
         try:
-            if pkcs12_password_bytes is None or pkcs12_password_bytes == b'':
-                pk_buf = private_key.private_bytes(
-                    cryptography.hazmat.primitives.serialization.Encoding.PEM,
-                    cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
-                    cryptography.hazmat.primitives.serialization.NoEncryption()
-                )
-            else:
-                pk_buf = private_key.private_bytes(
-                    cryptography.hazmat.primitives.serialization.Encoding.PEM,
-                    cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
-                    cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password=pkcs12_password_bytes)
-                )
+            tmp_pkcs12_password_bytes = random.randbytes(128//8)
+            pk_buf = private_key.private_bytes(
+                cryptography.hazmat.primitives.serialization.Encoding.PEM,
+                cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
+                cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password=tmp_pkcs12_password_bytes)
+            )
             c.write(pk_buf)
             buf = cert.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
             c.write(buf)
@@ -68,7 +63,7 @@ def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol):
                     c.write(buf)
             c.flush()
             c.close()
-            ssl_context.load_cert_chain(c.name, password=pkcs12_password_bytes)
+            ssl_context.load_cert_chain(c.name, password=tmp_pkcs12_password_bytes)
         finally:
             os.remove(c.name)
     return ssl_context
