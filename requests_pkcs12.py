@@ -37,7 +37,7 @@ def _check_cert_not_after(cert):
     if cert_not_after < datetime.datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
-def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol=default_ssl_protocol):
+def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol):
     private_key, cert, ca_certs = cryptography.hazmat.primitives.serialization.pkcs12.load_key_and_certificates(
         pkcs12_data,
         pkcs12_password_bytes
@@ -79,7 +79,7 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
         pkcs12_data = kwargs.pop('pkcs12_data', None)
         pkcs12_filename = kwargs.pop('pkcs12_filename', None)
         pkcs12_password = kwargs.pop('pkcs12_password', None)
-        ssl_protocol = kwargs.pop('ssl_protocol', default_ssl_protocol)
+        ssl_protocol_or_none = kwargs.pop('ssl_protocol', None)
         if pkcs12_data is None and pkcs12_filename is None:
             raise ValueError('Both arguments "pkcs12_data" and "pkcs12_filename" are missing')
         if pkcs12_data is not None and pkcs12_filename is not None:
@@ -95,6 +95,10 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
             pkcs12_password_bytes = pkcs12_password.encode('utf8')
         else:
             raise TypeError('Password must be a None, string or bytes.')
+        if ssl_protocol_or_none is None:
+            ssl_protocol = default_ssl_protocol
+        else:
+            ssl_protocol = ssl_protocol_or_none
         self.ssl_context = _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
 
@@ -130,7 +134,7 @@ def request(*args, **kwargs):
     pkcs12_data = kwargs.pop('pkcs12_data', None)
     pkcs12_filename = kwargs.pop('pkcs12_filename', None)
     pkcs12_password = kwargs.pop('pkcs12_password', None)
-    ssl_protocol = kwargs.pop('ssl_protocol', default_ssl_protocol)
+    ssl_protocol = kwargs.pop('ssl_protocol', None)
     if pkcs12_data is None and pkcs12_filename is None and pkcs12_password is None:
         return requests.request(*args, **kwargs)
     if 'cert' in  kwargs:
