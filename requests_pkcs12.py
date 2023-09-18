@@ -95,7 +95,6 @@ class Pkcs12Adapter(requests.adapters.HTTPAdapter):
             pkcs12_password_bytes = pkcs12_password.encode('utf8')
         else:
             raise TypeError('Password must be a None, string or bytes.')
-
         self.ssl_context = create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol)
         super(Pkcs12Adapter, self).__init__(*args, **kwargs)
 
@@ -199,7 +198,7 @@ def execute_test_case(test_case_name, key, cert, pkcs12_password, expected_statu
         if expected_exception_message is None or str(e) != expected_exception_message:
             raise(e)
 
-def selftest():
+def test():
     key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(public_exponent=65537, key_size=4096)
     cert = cryptography.x509.CertificateBuilder().subject_name(
         cryptography.x509.Name([
@@ -227,7 +226,7 @@ def selftest():
     execute_test_case('with empty password provided as bytes', key, cert, b'', 200, 'Password must be 1 or more bytes.')
     execute_test_case('with empty password provided as string', key, cert, '', 200, 'Password must be 1 or more bytes.')
     execute_test_case('without encryption', key, cert, None, 200, None)
-    print('Selftest succeeded.')
+    print('All tests succeeded.')
 
 if __name__ == '__main__':
-    selftest()
+    test()
