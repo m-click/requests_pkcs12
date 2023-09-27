@@ -23,8 +23,8 @@ import cryptography.hazmat.primitives.serialization.pkcs12
 import cryptography.x509.oid
 import datetime
 import os
-import random
 import requests.adapters
+import secrets
 import ssl
 import tempfile
 
@@ -47,7 +47,7 @@ def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol):
     ssl_context = ssl.SSLContext(ssl_protocol)
     with tempfile.NamedTemporaryFile(delete=False) as c:
         try:
-            tmp_pkcs12_password_bytes = random.randbytes(128//8)
+            tmp_pkcs12_password_bytes = secrets.token_bytes(128//8)
             pk_buf = private_key.private_bytes(
                 cryptography.hazmat.primitives.serialization.Encoding.PEM,
                 cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
