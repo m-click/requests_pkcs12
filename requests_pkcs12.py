@@ -34,7 +34,7 @@ except ImportError:
     from ssl import PROTOCOL_SSLv23 as default_ssl_protocol
 
 def _check_cert_not_after(cert):
-    cert_not_after = cert.not_valid_after
+    cert_not_after = cert.not_valid_after_utc
     if cert_not_after < datetime.datetime.utcnow():
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 

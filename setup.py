@@ -10,7 +10,7 @@ setup(
     license='ISC',
     python_requires='>=3.6',
     install_requires=[
-        'cryptography (>=3.4.7)',
+        'cryptography (>=42.0.0)',
         'requests (>=2.26.0)',
     ],
     extras_require={
