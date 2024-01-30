@@ -8,9 +8,9 @@ setup(
     author='Volker Diels-Grabsch',
     author_email='volker.diels-grabsch@m-click.aero',
     license='ISC',
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     install_requires=[
-        'cryptography (>=3.4.7)',
+        'cryptography (>=42.0.0)',
         'requests (>=2.26.0)',
     ],
     extras_require={
