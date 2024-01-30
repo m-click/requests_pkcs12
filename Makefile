@@ -52,7 +52,7 @@ release: clean
 	$(MAKE) .venv/finished
 	. .venv/bin/activate && python3 -c 'old_version = open("version").read().strip(); new_version = old_version.replace(".dev0", ""); open("version", "w").write("{}\n".format(new_version))'
 	$(MAKE) dist
-	. .venv/bin/activate && python3 -m twine upload dist/requests_pkcs12-*
+	. .venv/bin/activate && TWINE_PASSWORD=$$(cat pypi-token.txt) python3 -m twine upload -u __token__ dist/requests_pkcs12-*
 	git commit -am "Release $$(cat version)"
 	git tag -sm "$$(cat version)" "$$(cat version)"
 	. .venv/bin/activate && python3 -c 'old_version = open("version").read().strip(); new_version = "1.{}.dev0".format(int(old_version.split(".")[1]) + 1); open("version", "w").write("{}\n".format(new_version))'
