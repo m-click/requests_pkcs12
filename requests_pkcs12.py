@@ -35,7 +35,7 @@ except ImportError:
 
 def _check_cert_not_after(cert):
     cert_not_after = cert.not_valid_after_utc
-    if cert_not_after < datetime.datetime.utcnow():
+    if cert_not_after < datetime.datetime.now(datetime.timezone.utc):
         raise ValueError('Client certificate expired: Not After: {cert_not_after:%Y-%m-%d %H:%M:%SZ}'.format(**locals()))
 
 def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol):
