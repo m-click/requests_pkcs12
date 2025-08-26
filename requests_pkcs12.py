@@ -45,10 +45,6 @@ def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol):
     )
     _check_cert_not_after(cert)
     ssl_context = ssl.SSLContext(ssl_protocol)
-    if requests.__version__ >= '2.32':
-        # Workaround for an issue with requests versions 2.32.0, 2.32.3, and perhaps later versions,
-        # see https://github.com/m-click/requests_pkcs12/issues/55
-        ssl_context.load_default_certs()
     with tempfile.NamedTemporaryFile(delete=False) as c:
         try:
             tmp_pkcs12_password_bytes = secrets.token_bytes(128//8)
