@@ -50,7 +50,7 @@ def _create_sslcontext(pkcs12_data, pkcs12_password_bytes, ssl_protocol):
             tmp_pkcs12_password_bytes = secrets.token_bytes(128//8)
             pk_buf = private_key.private_bytes(
                 cryptography.hazmat.primitives.serialization.Encoding.PEM,
-                cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
+                cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8,
                 cryptography.hazmat.primitives.serialization.BestAvailableEncryption(password=tmp_pkcs12_password_bytes)
             )
             c.write(pk_buf)
