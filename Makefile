@@ -43,8 +43,7 @@ check: .venv/finished
 .PHONY: dist
 dist: check .venv/finished
 	rm -rf *.egg-info/ build/ dist/
-	. .venv/bin/activate && python3 setup.py sdist
-	. .venv/bin/activate && python3 setup.py bdist_wheel
+	. .venv/bin/activate && python3 -m build
 
 .PHONY: release
 release: clean

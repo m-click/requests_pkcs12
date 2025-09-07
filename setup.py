@@ -15,6 +15,7 @@ setup(
     ],
     extras_require={
         'dev': [
+            'build (>=1.3.0)',
             'twine (>=3.4.2)',
             'wheel (>=0.37.0)',
         ],
